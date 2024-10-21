@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "591307089648",
+    "project_id": "prj-firebase-d4db8",
+    "storage_bucket": "prj-firebase-d4db8.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:591307089648:android:efbd5fca0e8851dc500435",
+        "android_client_info": {
+          "package_name": "com.example.prj_firebase"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBa5zxE4Erb7T2oxmsyAcreAc62kw7Zbao"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

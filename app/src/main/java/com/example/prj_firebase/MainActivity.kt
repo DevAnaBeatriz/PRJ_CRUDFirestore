@@ -44,34 +44,131 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.prj_firebase.ui.theme.PRJ_FirebaseTheme
 
 import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
 
-
 class MainActivity : ComponentActivity() {
-    val db = Firebase.firestore
+    private val db = Firebase.firestore
+    private val auth = Firebase.auth
 
-    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+
         setContent {
-            PRJ_FirebaseTheme () {
-                Scaffold(modifier = Modifier.fillMaxSize()) {
-                    Column(Modifier.padding(top = 30.dp)) {
+            var isLoggedIn by remember { mutableStateOf(auth.currentUser != null) } // Verifica se o usuário já está logado
+
+            PRJ_FirebaseTheme {
+                Scaffold(
+                    modifier = Modifier.fillMaxSize()
+                ) { paddingValues ->
+                    if (isLoggedIn) {
                         App(db)
+                    } else {
+                        LoginScreen(auth) { loginSuccess ->
+                            isLoggedIn = loginSuccess
+                        }
                     }
                 }
             }
         }
     }
 }
+
+@Composable
+fun LoginScreen(auth: FirebaseAuth, onLoginSuccess: (Boolean) -> Unit) {
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+    var message by remember { mutableStateOf<String?>(null) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(text = "Login", style = MaterialTheme.typography.headlineMedium)
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = email,
+            onValueChange = { email = it },
+            label = { Text("Email") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = password,
+            onValueChange = { password = it },
+            label = { Text("Senha") },
+            visualTransformation = PasswordVisualTransformation(),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = {
+                isLoading = true
+                auth.signInWithEmailAndPassword(email, password)
+                    .addOnCompleteListener { task ->
+                        isLoading = false
+                        if (task.isSuccessful) {
+                            message = "Login realizado com sucesso"
+                            onLoginSuccess(true) // Chama o callback para indicar sucesso no login
+                        } else {
+                            message = "Erro no login: ${task.exception?.message}"
+                        }
+                    }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !isLoading
+        ) {
+            Text("Login")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(
+            onClick = {
+                isLoading = true
+                auth.createUserWithEmailAndPassword(email, password)
+                    .addOnCompleteListener { task ->
+                        isLoading = false
+                        message = if (task.isSuccessful) {
+                            "Conta criada com sucesso"
+                        } else {
+                            "Erro ao criar conta: ${task.exception?.message}"
+                        }
+                    }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !isLoading
+        ) {
+            Text("Registrar")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        message?.let {
+            Text(text = it, color = MaterialTheme.colorScheme.primary)
+        }
+    }
+}
+
 
 
 @Composable
